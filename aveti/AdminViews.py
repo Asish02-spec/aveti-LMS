@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
  
 from .forms import AddStudentForm, EditStudentForm ,AddTeacherForm, EditTeacherForm
  
-from .models import Cususer, Teachers,  Students
+from .models import Cususer, Teachers,  Students,Admin
  
  
 def admin_home(request): 
@@ -14,16 +14,19 @@ def admin_home(request):
 
     # For Saffs
     teacher_name_list=[]
+    teacher_ids = []
     teachers = Teachers.objects.all()
     for teacher in teachers:      
         teacher_name_list.append(teacher.admin.first_name)
- 
+        teacher_ids.append(teacher.id)
     # For Students
 
     student_name_list=[]
+    student_ids=[]
     students = Students.objects.all()
     for student in students:
         student_name_list.append(student.admin.first_name)
+        student_ids.append(student.id)
  
     print(teacher_name_list)
  
@@ -31,7 +34,9 @@ def admin_home(request):
         "all_student_count": all_student_count,
         "teacher_count": teacher_count,
         "teacher_name_list": teacher_name_list, 
+        "teacher_ids": teacher_ids,
         "student_name_list": student_name_list,
+        "student_ids":student_ids,
     }
     return render(request, "admin_template/admin_home.html", context)
  
@@ -75,13 +80,6 @@ def add_teacher_save(request):
             return redirect('add_teacher')
  
  
- 
-def manage_teacher(request):
-    teachers = teachers.objects.all()
-    context = {
-        "teachers": teachers
-    }
-    return render(request, "admin_template/manage_teacher.html", context)
  
  
 def edit_teacher(request, teacher_id):
@@ -128,14 +126,19 @@ def edit_teacher_save(request):
  
  
 def delete_teacher(request, teacher_id):
-    teacher = Teachers.objects.get(admin=teacher_id)
+    teacher = Teachers.objects.get(id=teacher_id)
     try:
         teacher.delete()
+        user = Cususer.objects.get(id=teacher_id)
+        try:
+            user.delete()
+        except:
+            messages.error(request, "Failed to Delete Teacher.")
         messages.success(request, "teacher Deleted Successfully.")
-        return redirect('manage_teacher')
+        return redirect('admin_home')
     except:
         messages.error(request, "Failed to Delete teacher.")
-        return redirect('manage_teacher')
+        return redirect('admin_home')
  
  
  
@@ -187,36 +190,45 @@ def add_student_save(request):
  
  
  
-def edit_student(request, student_id):
-   
+def edit_student(request,pk):
+    student_id = Students.objects.get(id=pk)
+    form = EditStudentForm()
+   # Filling the form with Data from Database
+    form.fields['email'].initial = student_id.admin.email
+    form.fields['username'].initial = student_id.admin.username
+    form.fields['first_name'].initial = student_id.admin.first_name
+    form.fields['last_name'].initial = student_id.admin.last_name
+    form.fields['gender'].initial = student_id.gender
+    if request.method == "POST":
+        form = EditStudentForm(request.POST)
+        if form.is_valid():
+            cd = form.cleaned_data
+            user = Students.objects.get(id=pk)
+            user.first_name = cd['first_name']
+            user.last_name = cd['last_name']
+            user.email = cd['email']
+            user.username = cd['username']
+            user.save()
+            return redirect('admin_home')
+    context = {'form':form}
+    return render(request, 'admin_template/edit_student.html', context)
  
-    student = get_object_or_404(Students,id=student_id)
-    form = EditStudentForm(request.POST or None, instance= student)
-     
-    # Filling the form with Data from Database
-    form.fields['email'].initial = student.admin.email
-    form.fields['username'].initial = student.admin.username
-    form.fields['first_name'].initial = student.admin.first_name
-    form.fields['last_name'].initial = student.admin.last_name
-    form.fields['gender'].initial = student.gender
-    if form.is_valid():
-        form.save()
-        return HttpResponseRedirect("/"+ student_id)
-    context ={
-        "form": form
-    }
-    return render(request, "admin_template/edit_student.html", context)
  
  
 def delete_student(request, student_id):
-    student = Students.objects.get(admin=student_id)
+    student = Students.objects.get(id=student_id)
     try:
         student.delete()
+        user = Cususer.objects.get(id=student_id)
+        try:
+            user.delete()
+        except:
+            messages.error(request, "Failed to Delete Student.")
         messages.success(request, "Student Deleted Successfully.")
-        return redirect('manage_student')
+        return redirect('admin_home')
     except:
         messages.error(request, "Failed to Delete Student.")
-        return redirect('manage_student')
+        return redirect('admin_home')
  
  
 

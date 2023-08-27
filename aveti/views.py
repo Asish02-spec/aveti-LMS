@@ -6,8 +6,8 @@ from django.contrib import messages
 
  
  
-def loginUser(request):
-    return render(request, 'login_page.html')
+# def login(request):
+#     return render(request, 'login_page.html')
  
 def doLogin(request):
      
@@ -98,5 +98,5 @@ def doRegistration(request):
      
 def logout_user(request):
     logout(request)
-    return HttpResponseRedirect('/')
+    return HttpResponseRedirect('/aveti')
  

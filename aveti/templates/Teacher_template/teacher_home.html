@@ -1,1 +1,17 @@
-<h1>hii</h1>
+<h1>Welcome</h1>{{ teacher}} Sir
+<h2>Students</h2>
+{% for s in student_name_list %}
+<div class="card">
+  <div class="container">
+    <h4><b>{{ s }}</b></h4> 
+    {% for i in student_ids %}
+    <a href="{%url 'edit_student' i %}">edit</a>
+    <a href="{%url 'delete_student' i %}">delete</a>
+    {% endfor %}
+    <p>Student</p> 
+  </div>
+  
+</div>
+{% endfor %}
+<a href="{%url 'add_student_save'  %}">Add Student</a>
+<a href="{%url 'logout_user'%}">logout</a>
